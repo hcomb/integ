@@ -1,0 +1,49 @@
+server:
+  applicationConnectors:
+  - type: http 
+    port: 8480
+  adminConnectors:
+  - type: http
+    port: 8481
+  applicationContextPath: /rrouter/api
+  adminContextPath: /rrouter/admin
+    
+logging:
+  level: WARN
+  loggers:
+    "org.glassfish.jersey.servlet.WebComponent": ERROR
+    "com.sun.jersey.api.client": DEBUG
+    "io.dropwizard": DEBUG
+    "eu.hcomb": DEBUG
+
+authKey:
+   tXBeLe1SX3zR2swZX4Rs5b4QSA3yzG9D2jTEO1DbeQM60nGqntr3+2jdraQlPixp40rTbic9spYH37KLprH3rQ==
+authTimeout:
+   3600
+
+corsConfig:
+   methods: GET,POST,PUT,DELETE,OPTIONS
+   origins: localhost, test.localhost
+   headers: Cookie, Authorization
+   allowCredentials: true
+
+redis:
+  host: localhost
+  port: 6379
+  minIdle: 0
+  maxIdle: 0
+  maxTotal: 1924
+  
+swaggerConfig:
+   baseUrl: localhost:8180
+   resourcePackages: eu.hcomb.common.resources,eu.hcomb.rrouter.resources
+   
+routerConfig:
+ - id: p1
+   type: QueueToTopic
+   origin: queue.q1
+   destination: [topic.t1]
+ - id: p2
+   type: TopicToQueue
+   origin: topic.t1
+   destination: [queue.q2, queue.q3, queue.q4]
