@@ -5,19 +5,12 @@ import io.dropwizard.lifecycle.Managed;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import redis.clients.jedis.JedisPool;
-
-import com.google.inject.Inject;
-
-public abstract class IntegrationPattern implements Managed{
+public abstract class IntegrationPattern implements Managed {
 
 	protected Log log = LogFactory.getLog(this.getClass());
 	
 	protected String id;
 	
-	@Inject
-	protected JedisPool pool;
-
 	public abstract void startPattern();
 	public abstract void stopPattern();
 	
@@ -47,13 +40,6 @@ public abstract class IntegrationPattern implements Managed{
 	
 	public abstract String getName();
 
-	public JedisPool getPool() {
-		return pool;
-	}
-
-	public void setPool(JedisPool pool) {
-		this.pool = pool;
-	}
 	public String getId() {
 		return id;
 	}

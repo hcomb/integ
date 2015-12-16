@@ -37,7 +37,16 @@ redis:
 swaggerConfig:
    baseUrl: localhost:8180
    resourcePackages: eu.hcomb.common.resources,eu.hcomb.rrouter.resources
-   
+
+jdbcConfig:
+   username: root
+   password: root
+   autoCommit: false
+   host: localhost
+   port: 3306
+   schema: hcomb_rrouter
+   healthCheckQuery: SELECT id FROM redis_instances LIMIT 0,1
+
 routerConfig:
  - id: p1
    type: QueueToTopic

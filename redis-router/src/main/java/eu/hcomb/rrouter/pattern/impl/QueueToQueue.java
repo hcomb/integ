@@ -3,7 +3,7 @@ package eu.hcomb.rrouter.pattern.impl;
 import redis.clients.jedis.Jedis;
 import eu.hcomb.rrouter.pattern.RetryForward;
 
-public class QueueToTopic extends RetryForward {
+public class QueueToQueue extends RetryForward {
 
 	Boolean running = false;
 
@@ -24,10 +24,11 @@ public class QueueToTopic extends RetryForward {
 	
 	@Override
 	public void sendPayload(Jedis out, String payload) {
-		out.publish(destination, payload);
+		out.lpush(destination, payload);
 	}
 
 	public void stopPattern() {
 		running = false;
 	}
+
 }

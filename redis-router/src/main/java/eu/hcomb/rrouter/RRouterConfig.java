@@ -6,13 +6,15 @@ import java.util.Map;
 
 import eu.hcomb.common.cors.CorsConfig;
 import eu.hcomb.common.cors.CorsConfigurable;
+import eu.hcomb.common.jdbc.JdbcConfig;
+import eu.hcomb.common.jdbc.JdbcConfigurable;
 import eu.hcomb.common.redis.JedisConfig;
 import eu.hcomb.common.redis.JedisConfigurable;
 import eu.hcomb.common.swagger.SwaggerConfig;
 import eu.hcomb.common.swagger.SwaggerConfigurable;
 import eu.hcomb.common.web.BaseConfig;
 
-public class RRouterConfig extends BaseConfig implements CorsConfigurable, SwaggerConfigurable, JedisConfigurable {
+public class RRouterConfig extends BaseConfig implements CorsConfigurable, SwaggerConfigurable, JedisConfigurable, JdbcConfigurable {
 	
 	protected CorsConfig corsConfig = new CorsConfig();
 
@@ -20,7 +22,13 @@ public class RRouterConfig extends BaseConfig implements CorsConfigurable, Swagg
 
     protected JedisConfig redis = new JedisConfig();
 
-    protected List<Map<String,Object>> routerConfig = new ArrayList<Map<String,Object>>();
+    protected JdbcConfig jdbcConfig = new JdbcConfig();
+
+    public JdbcConfig getJdbcConfig() {
+		return jdbcConfig;
+	}
+
+	protected List<Map<String,Object>> routerConfig = new ArrayList<Map<String,Object>>();
     
 	public List<Map<String, Object>> getRouterConfig() {
 		return routerConfig;
