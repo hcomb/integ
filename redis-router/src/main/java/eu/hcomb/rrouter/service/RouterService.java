@@ -2,7 +2,13 @@ package eu.hcomb.rrouter.service;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Param;
+
 import redis.clients.jedis.JedisPool;
+
+import com.google.inject.Injector;
+
+import eu.hcomb.rrouter.dto.EndpointDTO;
 import eu.hcomb.rrouter.dto.RedisInstanceDTO;
 import eu.hcomb.rrouter.dto.RouteDTO;
 import eu.hcomb.rrouter.pattern.InOut;
@@ -17,5 +23,9 @@ public interface RouterService {
 
 	public abstract JedisPool getPool(String key);
 
-	public abstract InOut getAndRegisterPattern(RouteDTO route);
+	public abstract InOut getAndRegisterPattern(Injector injector, RouteDTO route);
+	
+	public abstract List<EndpointDTO> getAllEndpoints();
+	
+	public abstract void update(Long id, int x, int y);
 }

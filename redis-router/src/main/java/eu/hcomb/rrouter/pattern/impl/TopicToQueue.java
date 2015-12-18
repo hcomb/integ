@@ -2,82 +2,27 @@ package eu.hcomb.rrouter.pattern.impl;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;
-import redis.clients.jedis.exceptions.JedisConnectionException;
-import eu.hcomb.rrouter.pattern.RetryForward;
+import eu.hcomb.common.redis.SendHandler;
+import eu.hcomb.rrouter.pattern.InOut;
 
-public class TopicToQueue extends RetryForward {
+public class TopicToQueue extends InOut {
 
-	Boolean running = false;
-	Subscriber subscriber;
+	protected Subscriber subscriber;
 
-	@Override
-	public void sendPayload(Jedis out, String payload) {
-		out.lpush(destination, payload);
-	}
-	
-	public void startPattern() {
-		subscriber = new Subscriber();
+	class Subscriber extends JedisPubSub implements SendHandler {
 
-		boolean ret = setupSubscription();
-		
-		if(!ret)
-			handleSubscriptionFailure();
-	}
-	
-	public void handleSubscriptionFailure() {
-		boolean ok = false;
-		int max = maxRetry;
-		while(!ok && max > 0){
-			try{
-				Thread.sleep(waitTime);
-			}catch(Exception e){}
-			max--;
-			log.warn("retrying to subscribe, #"+max+", origin:"+origin);
-			ok = setupSubscription();
+		public void sendPayload(Jedis out, String destination, String payload) {
+			out.lpush(destination, payload);
 		}
-		
-		if(!ok){
-			log.error("cannot subscribe to destination: "+destination);
-		}
-		
-	}
-
-	
-	public boolean setupSubscription(){
-		
-		Jedis in = null;
-		try {
-			in = poolIn.getResource();
-			running = true;
-			in.subscribe(subscriber, origin);
-			return true;
-		}catch(JedisConnectionException e){
-			poolIn.returnBrokenResource(in);
-			in = null;
-			log.warn("exception while subscribing to origin:" + origin+", exception:"+e.getMessage());
-			return false;
-		}finally{
-			if(in!=null)
-				poolIn.returnResource(in);
-		}
-	}
-
-	public void stopPattern() {
-
-		subscriber.unsubscribe(origin);
-		running = false;
-	}
-
-	class Subscriber extends JedisPubSub {
 
 		public void onMessage(String channel, String payload) {
 			
 			meterIn.mark();
 			
-			boolean ret = forward(payload);
+			boolean ret = redisService.send(poolOut, meterOut, destination, payload, this);
 			
 			if(!ret)
-				handleFailure(payload);
+				redisService.handleFailure(poolOut, meterOut, destination, payload, this, maxRetry, waitTime);
 
 		}
 
@@ -88,4 +33,18 @@ public class TopicToQueue extends RetryForward {
 		public void onPSubscribe(String pattern, int subscribedChannels) {}
 
 	}
+
+	public void startPattern() {
+		subscriber = new Subscriber();
+
+		boolean ret = redisService.setupSubscription(poolIn, subscriber, origin);
+		
+		if(!ret)
+			redisService.handleSubscriptionFailure(poolIn, subscriber, origin, maxRetry, waitTime);
+	}
+	
+	public void stopPattern() {
+		subscriber.unsubscribe(origin);
+	}
+
 }

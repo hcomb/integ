@@ -1,5 +1,7 @@
 package eu.hcomb.rrouter;
 
+import io.dropwizard.assets.AssetsBundle;
+import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
 import java.util.List;
@@ -21,10 +23,14 @@ import eu.hcomb.common.jdbc.PersistenceModule;
 import eu.hcomb.common.redis.ManagedJedisPool;
 import eu.hcomb.common.redis.RedisHealthCheck;
 import eu.hcomb.common.resources.WhoAmI;
+import eu.hcomb.common.service.RedisService;
+import eu.hcomb.common.service.impl.RedisServiceJedisImpl;
 import eu.hcomb.common.web.BaseApp;
 import eu.hcomb.rrouter.dto.RedisInstanceDTO;
 import eu.hcomb.rrouter.dto.RouteDTO;
 import eu.hcomb.rrouter.pattern.InOut;
+import eu.hcomb.rrouter.resources.EndpointResource;
+import eu.hcomb.rrouter.resources.InstanceResource;
 import eu.hcomb.rrouter.resources.RouterResource;
 import eu.hcomb.rrouter.service.RouterService;
 import eu.hcomb.rrouter.service.impl.RouterServiceImpl;
@@ -36,15 +42,30 @@ public class RRouterApp extends BaseApp<RRouterConfig> {
 		new RRouterApp().run(args);
 	}
 	
+	@Override
+	public String getName() {
+        return "redis-router";
+    }
+
 	public void configure(Binder binder) {
 		configureSecurity(binder);
 		
+		binder
+			.bind(RedisService.class)
+			.to(RedisServiceJedisImpl.class);
+
 		binder
 			.bind(RouterService.class)
 			.to(RouterServiceImpl.class);
 		
 	}	
 
+	@Override
+	public void initialize(Bootstrap<RRouterConfig> bootstrap) {
+		super.initialize(bootstrap);
+		bootstrap.addBundle(new AssetsBundle("/assets", "/app", "index.html"));
+	}
+	
 	@Override
 	public void run(RRouterConfig configuration, Environment environment) {
 		this.environment = environment;
@@ -66,7 +87,9 @@ public class RRouterApp extends BaseApp<RRouterConfig> {
 		
 		environment.jersey().register(injector.getInstance(WhoAmI.class));
 		environment.jersey().register(injector.getInstance(RouterResource.class));
-
+		environment.jersey().register(injector.getInstance(EndpointResource.class));
+		environment.jersey().register(injector.getInstance(InstanceResource.class));
+		
 		environment.healthChecks().register("mysql", injector.getInstance(DatasourceHealthCheck.class));
 
 		setUpSwagger(configuration, environment);
@@ -93,9 +116,9 @@ public class RRouterApp extends BaseApp<RRouterConfig> {
 		
 		List<RouteDTO> routes = routerSvc.getAllRoutes();
 		for (RouteDTO route : routes) {
-			InOut pattern = routerSvc.getAndRegisterPattern(route);
+			InOut pattern = routerSvc.getAndRegisterPattern(injector, route);
 			if(pattern==null){
-				log.info("ignoring route: " + route.getId() +" " + route.getFrom().getType() + " -> " + route.getTo().getType());
+				log.info("ignoring route: " + route.getFrom().getType() + " -> " + route.getTo().getType());
 			}else{
 				environment.lifecycle().manage(pattern);
 			}

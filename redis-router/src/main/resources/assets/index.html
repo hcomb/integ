@@ -1,0 +1,122 @@
+<!doctype html>
+<html>
+<head>
+  <title>RRouter Admin</title>
+
+  <script src="js/jquery-2.1.4.min.js" type="text/javascript"></script>
+  <script src="js/vis.min.js" type="text/javascript"></script>
+  <link href="css/vis.min.css" rel="stylesheet" type="text/css" />
+
+  <style type="text/css">
+    #mynetwork {
+      width: 100%;
+      height: 500px;
+      border: 1px solid lightgray;
+    }
+  </style>
+</head>
+<body>
+
+<div id="mynetwork"></div>
+
+<script type="text/javascript">
+
+function getLabel(endpoint){
+	if(endpoint.instance)
+		return endpoint.instance+":"+endpoint.key;
+	else
+		return endpoint.key;
+}
+
+function getColor(endpoint){
+	if(endpoint.type == "service")
+		return "#97C2FC";
+	if(endpoint.type == "topic")
+		return "#FFFF00";
+	if(endpoint.type == "queue")
+		return "#FB7E81";
+	return "#7BE141";
+}
+
+function getNode(endpoint){
+	var node = {
+		id : endpoint.id,
+		label : getLabel(endpoint),
+		color : getColor(endpoint),
+		x : endpoint.x,
+		y : endpoint.y
+	};
+	return node;
+}
+
+function getEdge(route){
+	var edge = {
+		from : route.from.id,
+		to : route.to.id
+	};
+	if(route.event!=null){
+		edge.label = route.event;
+		edge.font = {align: 'bottom'};
+	}
+	return edge;
+}
+
+$( document ).ready(function() {
+
+	$.get( "/rrouter/api/endpoints", function( endpoints ) {
+		
+		
+		$.get("/rrouter/api/routes", function(routes){
+
+			var edgeData = [];
+			$.each(routes, function( index, route ) {
+			  edgeData.push(getEdge(route));
+			});
+
+			var nodeData = [];
+			$.each(endpoints, function( index, endpoint ) {
+			  nodeData.push(getNode(endpoint));
+			});
+			
+		
+			var nodes = new vis.DataSet(nodeData);
+			var edges = new vis.DataSet(edgeData);
+			var container = document.getElementById('mynetwork');
+			var data = { nodes: nodes, edges: edges };
+			var options = {
+		        nodes: {
+			      physics:false
+			      },
+		        edges: {
+		          smooth: true,
+		          arrows: {to : true }
+		        }
+		      };
+			var network = new vis.Network(container, data, options);
+			network.on("dragEnd", function (params) {
+		        var nodeId = params.nodes;
+		        var x = parseInt(params.pointer.canvas.x, 10);
+		        var y = parseInt(params.pointer.canvas.y, 10);
+		        console.log( "node: " + nodeId + ", x:"+x+", y:"+y, params );
+		        if(nodeId!=""){
+		        
+		        	$.post( "/rrouter/api/endpoints/"+nodeId+"/"+x+"/"+y, function( res ) {
+		        	});
+		        	
+		        }
+		    });
+		
+		});
+	
+	
+	});
+
+
+
+
+
+});
+</script>
+
+</body>
+</html>

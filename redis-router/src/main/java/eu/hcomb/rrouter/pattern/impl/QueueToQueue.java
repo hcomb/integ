@@ -1,32 +1,32 @@
 package eu.hcomb.rrouter.pattern.impl;
 
 import redis.clients.jedis.Jedis;
-import eu.hcomb.rrouter.pattern.RetryForward;
+import eu.hcomb.common.redis.SendHandler;
+import eu.hcomb.rrouter.pattern.InOut;
 
-public class QueueToQueue extends RetryForward {
+public class QueueToQueue extends InOut implements SendHandler {
 
 	Boolean running = false;
+
+	public void sendPayload(Jedis out, String destination, String payload) {
+		out.lpush(destination, payload);
+	}
 
 	public void startPattern() {
 		running = true;
 
 		while (running) {
 
-			String payload = getPayload();
+			String payload = redisService.brpop(poolIn, meterIn, origin);
 						
-			boolean ret = forward(payload);
+			boolean ret = redisService.send(poolOut, meterOut, destination, payload, this);
 			
 			if(!ret)
-				handleFailure(payload);
+				redisService.handleFailure(poolOut, meterOut, destination, payload, this, maxRetry, waitTime);
 		}
 
 	}
 	
-	@Override
-	public void sendPayload(Jedis out, String payload) {
-		out.lpush(destination, payload);
-	}
-
 	public void stopPattern() {
 		running = false;
 	}

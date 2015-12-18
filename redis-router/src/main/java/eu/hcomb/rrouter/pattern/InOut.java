@@ -3,8 +3,14 @@ package eu.hcomb.rrouter.pattern;
 import redis.clients.jedis.JedisPool;
 
 import com.codahale.metrics.Meter;
+import com.google.inject.Inject;
+
+import eu.hcomb.common.service.RedisService;
 
 public abstract class InOut extends IntegrationPattern {
+
+	protected int maxRetry = 4;
+	protected int waitTime = 1000;
 
 	protected String origin;
 	protected String destination;
@@ -14,6 +20,9 @@ public abstract class InOut extends IntegrationPattern {
 
 	protected JedisPool poolIn;
 	protected JedisPool poolOut;
+
+	@Inject
+	protected RedisService redisService;
 	
 	@Override
 	public String getName() {

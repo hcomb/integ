@@ -13,6 +13,7 @@ import redis.clients.jedis.JedisPool;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Singleton;
 
 import eu.hcomb.rrouter.dto.EndpointDTO;
@@ -42,9 +43,17 @@ public class RouterServiceImpl implements RouterService {
 	
 	protected Map<String,Gauge<Long>> gauges = new HashMap<String,Gauge<Long>>();
 	
-	public InOut getAndRegisterPattern(RouteDTO route) {
+	public List<EndpointDTO> getAllEndpoints() {
+		return routerMapper.getAllEndpoints();
+	}
+	
+	public void update(Long id, int x, int y) {
+		routerMapper.update(id, x, y);
+	}
+	
+	public InOut getAndRegisterPattern(Injector injector, RouteDTO route) {
 
-		InOut pattern = getPatternInstance(route);
+		InOut pattern = getPatternInstance(injector, route);
 		if(pattern == null)
 			return null;
 		
@@ -91,13 +100,13 @@ public class RouterServiceImpl implements RouterService {
 
 
 
-	private InOut getPatternInstance(RouteDTO route) {
+	private InOut getPatternInstance(Injector injector, RouteDTO route) {
 		if(route.getFrom().getType().equals("queue") && route.getTo().getType().equals("queue"))
-			return new QueueToQueue();
+			return injector.getInstance(QueueToQueue.class);
 		if(route.getFrom().getType().equals("queue") && route.getTo().getType().equals("topic"))
-			return new QueueToTopic();
+			return injector.getInstance(QueueToTopic.class);
 		if(route.getFrom().getType().equals("topic") && route.getTo().getType().equals("queue"))
-			return new TopicToQueue();
+			return injector.getInstance(TopicToQueue.class);
 		return null;
 	}
 
