@@ -100,6 +100,7 @@ public class RRouterApp extends BaseApp<RRouterConfig> {
 
 		setUpSwagger(configuration, environment);
 		
+		setupExceptionMappers();
 	}
 
 	private void setupConfigurableJedis(RRouterConfig configuration, Environment environment) {

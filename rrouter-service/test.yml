@@ -7,7 +7,8 @@ server:
     port: 8481
   applicationContextPath: /rrouter/api
   adminContextPath: /rrouter/admin
-    
+  registerDefaultExceptionMappers: false
+
 logging:
   level: WARN
   loggers:
@@ -22,6 +23,15 @@ authTimeout:
    3600
    
 rrouterUrl: http://localhost:8480/rrouter/api
+
+jerseyClient:
+  timeout: 5s
+  connectionTimeout: 500ms
+  timeToLive: 1 hour
+  cookiesEnabled: false
+  maxConnections: 1024
+  maxConnectionsPerRoute: 1024
+  keepAlive: 0s
 
 corsConfig:
    methods: GET,POST,PUT,DELETE,OPTIONS
