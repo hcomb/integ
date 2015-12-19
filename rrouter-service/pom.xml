@@ -3,9 +3,9 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>eu.hcomb</groupId>
-	<artifactId>redis-router</artifactId>
+	<artifactId>rrouter-service</artifactId>
 	<version>1.0.0</version>
-	<name>redis-router</name>
+	<name>rrouter-service</name>
 
 	<properties>
 		<dropwizard.version>0.9.1</dropwizard.version>
@@ -23,6 +23,12 @@
 			<groupId>io.dropwizard</groupId>
 			<artifactId>dropwizard-assets</artifactId>
 			<version>${dropwizard.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>eu.hcomb</groupId>
+			<artifactId>rrouter-api</artifactId> 
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>

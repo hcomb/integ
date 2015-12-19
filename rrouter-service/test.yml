@@ -20,6 +20,8 @@ authKey:
    tXBeLe1SX3zR2swZX4Rs5b4QSA3yzG9D2jTEO1DbeQM60nGqntr3+2jdraQlPixp40rTbic9spYH37KLprH3rQ==
 authTimeout:
    3600
+   
+rrouterUrl: http://localhost:8480/rrouter/api
 
 corsConfig:
    methods: GET,POST,PUT,DELETE,OPTIONS

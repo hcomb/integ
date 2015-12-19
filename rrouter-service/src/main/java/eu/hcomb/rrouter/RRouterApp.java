@@ -23,7 +23,9 @@ import eu.hcomb.common.jdbc.PersistenceModule;
 import eu.hcomb.common.redis.ManagedJedisPool;
 import eu.hcomb.common.redis.RedisHealthCheck;
 import eu.hcomb.common.resources.WhoAmI;
+import eu.hcomb.common.service.EventEmitter;
 import eu.hcomb.common.service.RedisService;
+import eu.hcomb.common.service.impl.RedisEventEmitter;
 import eu.hcomb.common.service.impl.RedisServiceJedisImpl;
 import eu.hcomb.common.web.BaseApp;
 import eu.hcomb.rrouter.dto.RedisInstanceDTO;
@@ -44,7 +46,7 @@ public class RRouterApp extends BaseApp<RRouterConfig> {
 	
 	@Override
 	public String getName() {
-        return "redis-router";
+        return "rrouter-service";
     }
 
 	public void configure(Binder binder) {
@@ -58,6 +60,10 @@ public class RRouterApp extends BaseApp<RRouterConfig> {
 			.bind(RouterService.class)
 			.to(RouterServiceImpl.class);
 		
+		binder
+			.bind(EventEmitter.class)
+			.to(RedisEventEmitter.class);
+
 	}	
 
 	@Override
@@ -68,7 +74,7 @@ public class RRouterApp extends BaseApp<RRouterConfig> {
 	
 	@Override
 	public void run(RRouterConfig configuration, Environment environment) {
-		this.environment = environment;
+		init(environment, configuration);
 		
 		Module persistence = new PersistenceModule(configuration, environment) {
 			@Override
@@ -126,8 +132,6 @@ public class RRouterApp extends BaseApp<RRouterConfig> {
 		}
 	}
 
-	Environment environment;
-	
 	@Provides
 	@Singleton
 	public MetricRegistry getMetricsRegistry(){
