@@ -10,6 +10,7 @@ import redis.clients.jedis.Protocol;
 
 public class GetFromQueue {
 
+	@SuppressWarnings("resource")
 	public static void main(String[] args) {
 		
 		JedisPoolConfig poolConfig = new JedisPoolConfig();
