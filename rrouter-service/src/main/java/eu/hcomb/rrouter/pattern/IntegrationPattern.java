@@ -17,7 +17,6 @@ public abstract class IntegrationPattern implements Managed {
 	protected Thread innerThread;
 	
 	public void start() throws Exception {
-		log.debug("starting pattern " + getName());
 		innerThread = new Thread(new Runnable() {
 			public void run() {
 				try{

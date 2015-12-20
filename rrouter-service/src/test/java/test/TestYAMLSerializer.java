@@ -9,6 +9,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 public class TestYAMLSerializer {
 
+	@SuppressWarnings("serial")
 	public static void main(String[] args) throws Exception {
 		
 		YAMLMapper mapper = new YAMLMapper();

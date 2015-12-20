@@ -10,14 +10,14 @@ import javax.ws.rs.core.MediaType;
 import com.google.inject.Inject;
 
 import eu.hcomb.rrouter.dto.RouteDTO;
-import eu.hcomb.rrouter.service.RouterService;
+import eu.hcomb.rrouter.service.LocalRouterService;
 
 @Path("/routes")
 @Produces(MediaType.APPLICATION_JSON)
 public class RouterResource {
 
 	@Inject
-	protected RouterService routerService;
+	protected LocalRouterService routerService;
 	
 	@GET
 	public List<RouteDTO> get(){

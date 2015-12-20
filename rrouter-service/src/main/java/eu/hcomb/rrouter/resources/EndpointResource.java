@@ -15,7 +15,7 @@ import org.apache.commons.logging.LogFactory;
 import com.google.inject.Inject;
 
 import eu.hcomb.rrouter.dto.EndpointDTO;
-import eu.hcomb.rrouter.service.RouterService;
+import eu.hcomb.rrouter.service.LocalRouterService;
 
 @Path("/endpoints")
 @Produces(MediaType.APPLICATION_JSON)
@@ -24,7 +24,7 @@ public class EndpointResource {
 	protected Log log = LogFactory.getLog(this.getClass());
 	
 	@Inject
-	protected RouterService routerService;
+	protected LocalRouterService routerService;
 	
 	@GET
 	public List<EndpointDTO> get(){

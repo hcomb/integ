@@ -8,9 +8,6 @@ import java.util.List;
 
 import org.mybatis.guice.datasource.helper.JdbcHelper;
 
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
-
 import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
@@ -20,12 +17,12 @@ import com.google.inject.Singleton;
 
 import eu.hcomb.common.jdbc.DatasourceHealthCheck;
 import eu.hcomb.common.jdbc.PersistenceModule;
-import eu.hcomb.common.redis.ManagedJedisPool;
-import eu.hcomb.common.redis.RedisHealthCheck;
 import eu.hcomb.common.resources.WhoAmI;
 import eu.hcomb.common.service.EventEmitter;
+import eu.hcomb.common.service.RedisPoolContainer;
 import eu.hcomb.common.service.RedisService;
 import eu.hcomb.common.service.impl.RedisEventEmitter;
+import eu.hcomb.common.service.impl.RedisPoolContainerImpl;
 import eu.hcomb.common.service.impl.RedisServiceJedisImpl;
 import eu.hcomb.common.web.BaseApp;
 import eu.hcomb.rrouter.dto.RedisInstanceDTO;
@@ -34,8 +31,9 @@ import eu.hcomb.rrouter.pattern.InOut;
 import eu.hcomb.rrouter.resources.EndpointResource;
 import eu.hcomb.rrouter.resources.InstanceResource;
 import eu.hcomb.rrouter.resources.RouterResource;
+import eu.hcomb.rrouter.service.LocalRouterService;
 import eu.hcomb.rrouter.service.RouterService;
-import eu.hcomb.rrouter.service.impl.RouterServiceImpl;
+import eu.hcomb.rrouter.service.impl.LocalRouterServiceImpl;
 import eu.hcomb.rrouter.service.mapper.RouterMapper;
 
 public class RRouterApp extends BaseApp<RRouterConfig> {
@@ -51,18 +49,23 @@ public class RRouterApp extends BaseApp<RRouterConfig> {
 
 	public void configure(Binder binder) {
 		configureSecurity(binder);
-		
+		configureEventEmitter(binder);
+
 		binder
-			.bind(RedisService.class)
-			.to(RedisServiceJedisImpl.class);
+			.bind(LocalRouterService.class)
+			.to(LocalRouterServiceImpl.class);
 
 		binder
 			.bind(RouterService.class)
-			.to(RouterServiceImpl.class);
-		
+			.to(LocalRouterServiceImpl.class);
+
 		binder
 			.bind(EventEmitter.class)
 			.to(RedisEventEmitter.class);
+
+		binder
+			.bind(RedisService.class)
+			.to(RedisServiceJedisImpl.class);
 
 	}	
 
@@ -104,28 +107,18 @@ public class RRouterApp extends BaseApp<RRouterConfig> {
 	}
 
 	private void setupConfigurableJedis(RRouterConfig configuration, Environment environment) {
-		RouterService routerSvc = injector.getInstance(RouterService.class);
+		LocalRouterService routerSvc = injector.getInstance(LocalRouterService.class);
+		RedisPoolContainer redisPools = injector.getInstance(RedisPoolContainerImpl.class);
 		List<RedisInstanceDTO> instances = routerSvc.getAllInstances();
 		for (RedisInstanceDTO instance : instances) {
-			
-			JedisPoolConfig poolConfig = new JedisPoolConfig();
-			poolConfig.setMinIdle(instance.getMinIdle());
-			poolConfig.setMaxIdle(instance.getMaxIdle());
-			poolConfig.setMaxTotal(instance.getMaxTotal());
-	
-			JedisPool pool = new JedisPool(poolConfig, instance.getHost(), instance.getPort(), 2000);
-
-			environment.lifecycle().manage(new ManagedJedisPool(pool));
-			environment.healthChecks().register("redis-"+instance.getName(), new RedisHealthCheck(pool));
-			
-			routerSvc.setPool(instance.getName(), pool);
+			redisPools.register(environment, instance);
 		}
 		
 		List<RouteDTO> routes = routerSvc.getAllRoutes();
 		for (RouteDTO route : routes) {
 			InOut pattern = routerSvc.getAndRegisterPattern(injector, route);
 			if(pattern==null){
-				log.info("ignoring route: " + route.getFrom().getType() + " -> " + route.getTo().getType());
+				//log.info("ignoring route: " + route.getFrom().getType() + " -> " + route.getTo().getType());
 			}else{
 				environment.lifecycle().manage(pattern);
 			}

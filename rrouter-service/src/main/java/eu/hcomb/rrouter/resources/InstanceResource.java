@@ -10,14 +10,14 @@ import javax.ws.rs.core.MediaType;
 import com.google.inject.Inject;
 
 import eu.hcomb.rrouter.dto.RedisInstanceDTO;
-import eu.hcomb.rrouter.service.RouterService;
+import eu.hcomb.rrouter.service.LocalRouterService;
 
 @Path("/instances")
 @Produces(MediaType.APPLICATION_JSON)
 public class InstanceResource {
 
 	@Inject
-	protected RouterService routerService;
+	protected LocalRouterService routerService;
 	
 	@GET
 	public List<RedisInstanceDTO> get(){

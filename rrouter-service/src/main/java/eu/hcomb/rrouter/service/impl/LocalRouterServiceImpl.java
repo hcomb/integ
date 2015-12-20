@@ -8,7 +8,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
@@ -16,6 +15,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
 
+import eu.hcomb.common.service.RedisPoolContainer;
 import eu.hcomb.rrouter.dto.EndpointDTO;
 import eu.hcomb.rrouter.dto.RedisInstanceDTO;
 import eu.hcomb.rrouter.dto.RouteDTO;
@@ -23,11 +23,11 @@ import eu.hcomb.rrouter.pattern.InOut;
 import eu.hcomb.rrouter.pattern.impl.QueueToQueue;
 import eu.hcomb.rrouter.pattern.impl.QueueToTopic;
 import eu.hcomb.rrouter.pattern.impl.TopicToQueue;
-import eu.hcomb.rrouter.service.RouterService;
+import eu.hcomb.rrouter.service.LocalRouterService;
 import eu.hcomb.rrouter.service.mapper.RouterMapper;
 
 @Singleton
-public class RouterServiceImpl implements RouterService {
+public class LocalRouterServiceImpl implements LocalRouterService {
 
 	protected Log log = LogFactory.getLog(this.getClass());
 	
@@ -37,7 +37,8 @@ public class RouterServiceImpl implements RouterService {
 	@Inject
 	protected MetricRegistry registry;
 	
-	protected Map<String,JedisPool> pools = new HashMap<String,JedisPool>();
+	@Inject
+	protected RedisPoolContainer redisPools;
 	
 	protected Map<RouteDTO,InOut> patterns = new HashMap<RouteDTO, InOut>();
 	
@@ -60,10 +61,10 @@ public class RouterServiceImpl implements RouterService {
 		pattern.setId(""+route.getId());
 		
 		pattern.setOrigin(route.getFrom().getKey());
-		pattern.setPoolIn(pools.get(route.getFrom().getInstance()));
+		pattern.setPoolIn(redisPools.getPool(route.getFrom().getInstance()));
 
 		pattern.setDestination(route.getTo().getKey());
-		pattern.setPoolOut(pools.get(route.getTo().getInstance()));
+		pattern.setPoolOut(redisPools.getPool(route.getTo().getInstance()));
 		
 		pattern.setMeterIn(registry.meter("router.route."+route.getId()+"."+route.getFrom().getInstance() + "." + route.getFrom().getKey()));
 		pattern.setMeterOut(registry.meter("router.route."+route.getId()+"."+route.getTo().getInstance() + "." + route.getTo().getKey()));
@@ -84,7 +85,7 @@ public class RouterServiceImpl implements RouterService {
 		if("queue".equals(endpoint.getType())){
 			String key = "router.queue."+routeId+"."+endpoint.getInstance() + "." + endpoint.getKey() + ".size";
 			Gauge<Long> gauge = gauges.get(key);
-			final Jedis jedis = pools.get(endpoint.getInstance()).getResource();
+			final Jedis jedis = redisPools.getPool(endpoint.getInstance()).getResource();
 			if(gauge == null){
 				log.info("registering gauge metric on queue "+endpoint.getInstance() + ":" + endpoint.getKey());
 				gauge = new Gauge<Long>() {
@@ -119,29 +120,6 @@ public class RouterServiceImpl implements RouterService {
 	
 	public List<RedisInstanceDTO> getAllInstances() {
 		return routerMapper.getAllInstances();
-	}
-
-	public JedisPool getPool(String key) {
-		return pools.get(key);
-	}
-
-	public JedisPool setPool(String key, final JedisPool pool) {
-		
-		String pkey = "router.pool."+key + ".active";
-		Gauge<Long> gauge = gauges.get(pkey);
-		if(gauge == null){
-			log.info("registering gauge metric on pool "+key);
-			gauge = new Gauge<Long>() {
-				public Long getValue() {
-					return new Long(pool.getNumActive());
-				}
-			};
-			
-			registry.register(pkey, gauge);
-			gauges.put(pkey, gauge);
-		}
-
-		return pools.put(key, pool);
 	}
 	
 }
