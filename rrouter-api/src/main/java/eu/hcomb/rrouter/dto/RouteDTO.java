@@ -80,7 +80,7 @@ public class RouteDTO {
 		to.setKey(toKey);
 		to.setType(toType);
 		setTo(to);
-		setId(null);
+		setToId(null);
 		setToInstanceName(null);
 		setToKey(null);
 		setToType(null);
